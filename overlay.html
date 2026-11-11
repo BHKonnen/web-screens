@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web Screens overlay</title>
+  <style>
+    /* No color-scheme meta on purpose: it must stay transparent over the map. */
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+    #root { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
+    .screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; background: #fff; will-change: transform; }
+    .screen iframe { display: block; width: 100%; height: 100%; border: 0; background: #fff; pointer-events: none; }
+    .screen.hidden-gm { opacity: 0.35; outline: 8px dashed #f59e0b; }
+    .screen.selected { outline: 8px solid #4f8cff; }
+    /* Interact mode: the page itself must receive mouse input. */
+    body.interactive .screen, body.interactive .screen iframe { pointer-events: auto; }
+    #exit { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 10; pointer-events: auto;
+            padding: 8px 16px; border: 0; border-radius: 999px; background: #4f8cff; color: #fff;
+            font: 600 14px system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.4); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <button id="exit" hidden>Done – back to the map</button>
+  <script type="module" src="/src/overlay/main.ts"></script>
+</body>
+</html>

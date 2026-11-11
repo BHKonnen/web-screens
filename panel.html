@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web Screens</title>
+  <style>
+    body { margin: 0; padding: 12px; overflow-y: auto; font: 14px system-ui, sans-serif; color: #e5e7eb; background: #1f2230; }
+    h1 { font-size: 15px; margin: 0 0 10px; }
+    label { display: block; margin: 8px 0 3px; font-size: 12px; color: #9ca3af; }
+    input, textarea { width: 100%; font: inherit; box-sizing: border-box; padding: 6px 8px; border-radius: 6px; border: 1px solid #3b3f54; background: #151722; color: inherit; }
+    .row { display: flex; gap: 8px; } .row > div { flex: 1; }
+    button { margin-top: 12px; width: 100%; padding: 8px; border: 0; border-radius: 6px; background: #4f8cff; color: #fff; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    #status { margin-top: 8px; min-height: 18px; font-size: 12px; }
+    .err { color: #f87171; } .ok { color: #4ade80; }
+    h2 { font-size: 13px; margin: 18px 0 0; padding-top: 12px; border-top: 1px solid #3b3f54; }
+    .muted { color: #9ca3af; font-size: 12px; }
+    .item { border: 1px solid #3b3f54; border-radius: 8px; padding: 8px; margin-top: 8px; }
+    .item .title { font-weight: 600; overflow-wrap: anywhere; }
+    .item .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .item button { width: auto; margin: 0; padding: 4px 10px; font-size: 12px; font-weight: 500; background: #2d3148; }
+    .item button.danger { background: #b91c1c; }
+    .item textarea { margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Web Screens</h1>
+  <div id="app"></div>
+  <script type="module" src="/src/panel/main.ts"></script>
+</body>
+</html>
