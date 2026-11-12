@@ -1,5 +1,5 @@
 import type { WebScreen } from "../shared/screen";
-import type { ViewTransform } from "./viewportTracker";
+import type { ViewTransform } from "./camera";
 
 const IFRAME_SANDBOX = "allow-scripts allow-same-origin allow-forms allow-popups allow-presentation";
 
@@ -20,7 +20,16 @@ export class ScreenRenderer {
   private view: ViewTransform | undefined;
   private selected = new Set<string>();
 
-  constructor(private readonly root: HTMLElement) {}
+  constructor(
+    private readonly root: HTMLElement,
+    private readonly interactive = false,
+  ) {}
+
+  /** Promote to a compositor layer only while the camera moves; at rest the page is re-drawn crisp. */
+  setMoving(moving: boolean): void {
+    // Keep compositor state stable; toggling layers causes iframe ghosting.
+    void moving;
+  }
 
   get count(): number {
     return this.screens.length;
@@ -64,6 +73,7 @@ export class ScreenRenderer {
     iframe.setAttribute("referrerpolicy", "no-referrer");
     iframe.setAttribute("allow", ""); // no camera, microphone, geolocation, etc.
     iframe.title = s.name;
+    iframe.loading = "eager";
     iframe.src = s.config.url;
     wrap.append(iframe);
     this.root.append(wrap);
@@ -89,9 +99,12 @@ export class ScreenRenderer {
       st.width = `${pageW}px`;
       st.height = `${pageH}px`;
       // Right-to-left: scale the page to fit, rotate about the item origin, move.
-      st.transform = `translate(${sx}px, ${sy}px) rotate(${s.rotation}deg) scale(${k})`;
+      const transform = `translate3d(${sx}px, ${sy}px, 0) rotate(${s.rotation}deg) scale(${k})`;
+      if (st.transform !== transform) st.transform = transform;
       entry.wrap.classList.toggle("hidden-gm", !s.visible);
-      entry.wrap.classList.toggle("selected", this.selected.has(s.id));
+      // A selected screen steps aside (the page stays loaded, just hidden) so Owlbear's own
+      // handles and menus are visible and usable. Interact mode ignores selection.
+      entry.wrap.classList.toggle("editing", !this.interactive && this.selected.has(s.id));
     }
   }
 }

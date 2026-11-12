@@ -7,6 +7,15 @@ export const SCREEN_KEY = `${NS}/screen`;
 export const OVERLAY_MODAL_ID = `${NS}/overlay`;
 /** Local-only broadcast channel: overlay -> background on the same client. */
 export const MODE_CHANNEL = `${NS}/mode`;
+/** "display": click-through, map usable. "interact": screens receive mouse input. */
+export type OverlayMode = "display" | "interact";
+
+/**
+ * Placeholder fill. Owlbear only hit-tests the border of a shape whose fill is
+ * fully transparent, which made screens hard to select. A near-zero fill makes
+ * the whole area selectable while staying invisible under the overlay.
+ */
+export const PLACEHOLDER_FILL_OPACITY = 0.01;
 
 export const DEFAULT_PAGE_WIDTH = 1280;
 const PAGE_WIDTH_MIN = 320;

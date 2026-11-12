@@ -17,7 +17,7 @@ function manifestPlugin(base: string): Plugin {
     JSON.stringify(
       {
         name: "Web Screens",
-        version: "0.1.0",
+        version: "0.3.0",
         manifest_version: 1,
         author: "You",
         description: "Place interactive web pages on the map as screens that follow pan and zoom.",

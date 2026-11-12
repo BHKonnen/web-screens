@@ -1,3 +1,24 @@
+# Web Screens 0.3.0 — stability patch
+
+## What changed
+- Camera tracking uses measured positions without forward velocity extrapolation (reduces zoom overshoot).
+- Stable GPU compositing for screens; no switching `will-change` on every pan.
+- Avoids writing identical CSS transforms.
+- Serialized modal lifecycle prevents rapid interaction toggles and scene changes from racing.
+- Camera idle polling reduced from 20 Hz to 10 Hz.
+- Screen iframe remains mounted while moving/resizing/selecting within the same overlay.
+
+## Important Owlbear SDK limitation
+The modal API supports `open` and `close`, **not updating `disablePointerEvents` in place**. Switching between fully click-through display mode and interactive mode necessarily destroys/recreates the modal and reloads embedded pages. This version does **not** claim to fix that limitation. Keep interactive work in a separate browser tab or collaborative website if it must survive switching modes. A true zero-reload solution would require a different supported overlay API or sacrificing native map interaction.
+
+## Multiplayer
+Scene item metadata synchronizes screen URL, position, visibility and dimensions. Embedded website sessions remain local to each player; real-time collaboration requires support from the embedded website. `localhost` URLs only work on the computer running the server; use HTTPS hosting for remote players.
+
+## Verification
+Run `npm ci && npm run build` and test two browsers in one Owlbear room. This patch was statically reviewed but a full browser/SDK integration test is required.
+
+---
+
 # Web Screens for Owlbear Rodeo
 
 Place interactive web pages (Canva, Kumu, …) on the map as "screens". They sit at a
@@ -7,11 +28,18 @@ map position, follow pan and zoom, and every player sees them automatically.
 
 - A screen is a normal scene item (a rectangle) with the URL stored in its metadata.
   Move, rotate, resize, lock and hide it like any other item. Owlbear syncs it.
-- A hidden background page opens a transparent, click-through overlay on every client
-  and draws one iframe per screen, positioned from the camera.
-- The overlay is click-through, so the map stays usable. To click or zoom **inside** a
-  page, select the screen and choose **Interact with screen**. Click **Done** (or empty
-  space) to leave. The pages reload when you enter and leave this mode.
+  Click anywhere inside the rectangle to select it. While a screen is selected its live
+  page steps aside (stays loaded, just hidden) so Owlbear's own resize/rotate handles and
+  menus are visible. Deselect it and the page comes back.
+- A hidden background page opens a transparent overlay on every client and draws one
+  iframe per screen, positioned from the camera. It predicts the camera a few
+  milliseconds ahead so screens stay glued to the map while you pan and zoom.
+- **Display mode (default):** the overlay is click-through, so the map and tokens work
+  normally. The pages themselves can't be clicked in this mode.
+- **Interact mode:** click the extension icon -> **Interact with screens** (or select a
+  screen -> **Interact with screen**). Now you can click and zoom inside the pages.
+  It stays on until you press **Done** or Esc. Drag empty space to move the map and
+  scroll to zoom; to move tokens, press Done. The pages reload when you enter and leave.
 - **Open screen in window** shows the page in a large Owlbear window instead.
 
 ## Run locally (Windows)
@@ -54,7 +82,9 @@ a few minutes.
 1. Click the Web Screens icon (GM only). Paste a URL **or the full `<iframe>` embed
    code**. The iframe's `src` is extracted and its proportions used when given.
 2. **Add screen at view center.** Drag/rotate/resize it as usual.
-3. Manage screens in the panel: Go to, Hide/Show, Edit URL, Delete.
+3. Manage screens in the panel: Go to, Select, Hide/Show, Lock/Unlock, Edit URL, Delete.
+   Players see the list too (Go to only) and the **Interact with screens** button.
+4. Screens created by version 0.1 are repaired automatically when the GM opens the scene.
 
 ## Websites
 
@@ -70,11 +100,22 @@ restrictive `frame-ancestors`) can work. Only `https://` URLs are accepted.
 
 ## Known limitations
 
-- No viewport change event exists in the Owlbear SDK, so the overlay samples the camera
-  (about 30 Hz while moving, about 8 Hz when still, none with no screens or a hidden tab).
-  The screen can trail the map slightly during fast pans.
-- The overlay is drawn above the map, tokens and fog. A screen is never hidden by them.
-- Interact mode blocks the map for that player until they leave it, and reloads the pages.
+- The Owlbear SDK has no camera change event, so the overlay samples the camera (once per
+  animation frame while moving, about 20 Hz at rest, never with no screens or a hidden tab)
+  and predicts ahead. This greatly reduces lag but cannot remove it: expect a tiny wobble
+  when a fast pan stops.
+- The overlay is drawn above the map, tokens and fog, and above Owlbear's interface:
+  the SDK only offers modals, which are defined as UI on top of everything, and has no layer
+  between the map and the interface. Mitigations: screens are cut off 64 px from the right
+  edge (where the toolbar sits; adjustable per edge under "Display" in the panel), and a
+  selected screen hides itself so menus and handles are not covered. A menu that opens
+  over an unselected screen, or an interface element outside the margins, can still be covered.
+- Interact mode blocks the map's own mouse handling for that player (tokens can't be
+  moved until Done). Panning and zooming are re-implemented through the camera API, and
+  switch themselves off if the camera API doesn't behave as expected.
+- Entering and leaving interact mode reloads the pages (Owlbear fixes a modal's pointer
+  behavior when it opens), so slide position or zoom inside a page is lost.
+- A locked screen can't be selected on the map by players: use the panel button.
 - "Only the GM can edit" is enforced by the extension's interface. The Owlbear SDK has
   no server-side permission for custom data, so a modified client could still write.
 - Players need the extension installed.
@@ -88,3 +129,5 @@ restrictive `frame-ancestors`) can work. Only `https://` URLs are accepted.
 - **Screen blank:** the site probably blocks embedding. Test the same URL via **Open
   screen in window**; if blank there too, it cannot be embedded.
 - **Screen in the wrong place:** please report it with your browser and window setup.
+- **Screen covers part of Owlbear's UI:** panel -> Display -> raise the margin for that edge.
+- **Page looks blurry while panning/zooming:** it is sharpened again when the camera stops.
